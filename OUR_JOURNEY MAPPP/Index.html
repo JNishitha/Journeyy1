@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Journey in Visakhapatnam</title>
+    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5.11.0/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5.11.0/main.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHOsLnSVVu5uw6CuOWusMjHxCmThyCWI4&callback=initMap" async defer></script>
+
+    <style>
+        /* Styling as before */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #001133, #061626);
+            color: #333;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            scroll-behavior: smooth;
+            position: smooth; /* Position relative for stars and hearts */
+        }
+        h2 {
+            color: #d14a72;
+            font-size: 2.5em;
+            margin-top: 20px;
+            position: relative; /* Ensure h2 is above the stars and hearts */
+            z-index: 1; /* Bring h2 in front of the background */
+        }
+
+        .timeline {
+            margin-top: 50px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative; /* Ensure timeline is above the background */
+            z-index: 1; /* Bring timeline in front of the background */
+        }
+        .event {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #f8d7e5;
+            border-left: 5px solid #d14a72;
+            border-radius: 8px;
+            transition: transform 0.3s ease;
+        }
+        .event:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        .event h4 {
+            color: #d14a72;
+            font-size: 1.5em;
+        }
+        .event p {
+            color: #666;
+        }
+        .event .date {
+            font-weight: bold;
+            color: #d14a72;
+        }
+
+        #modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            z-index: 2; /* Ensure modal is above everything */
+        }
+
+        .carousel {
+            display: flex;
+            overflow: hidden;
+            width: 100%;
+            position: relative;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .carousel .slide {
+            min-width: 100%;
+            transition: transform 0.5s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .carousel img, .carousel video {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+            border-radius: 15px;
+        }
+
+        #close-modal {
+            margin-top: 15px;
+            background-color: #d14a72;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius:             10px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        /* Navigation buttons for the carousel */
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 1.5em;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 50%;
+            z-index: 3; /* Ensure navigation buttons are above everything */
+        }
+        .prev {
+            left: 10px;
+        }
+        .next {
+            right: 10px;
+        }
+
+        /* Falling hearts */
+        .heart {
+            position: absolute;
+            top: -50px;
+            font-size: 24px;
+            color: red;
+            animation: fall linear infinite;
+            z-index: 0; /* Ensure hearts are behind other content */
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: #fff;
+            border-radius: 50%;
+            z-index: 0; /* Ensure stars are behind other content */
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(100vh);
+            }
+        }
+
+        /* Romantic Voice Notes Section */
+        .voice-notes {
+            margin: 50px auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            position: relative; /* Ensure voice notes are above the background */
+            z-index: 1; /* Bring voice notes in front of the background */
+        }
+        .voice-note {
+            margin-bottom: 20px;
+        }
+        audio {
+            width: 100%; /* Make the audio player full width */
+            border-radius: 10px;
+            outline: none;
+        }
+
+        /* Book a Slot Section */
+        .book-slot {
+            margin: 50px auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            position: relative; /* Ensure booking section is above the background */
+            z-index: 1; /* Bring booking section in front of the background */
+        }
+        .book-slot h3 {
+            color: #d14a72;
+            font-size: 2em;
+        }
+        .book-slot input, .book-slot textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .book-slot button {
+            background-color: #d14a72;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        /* Popup Styles */
+        #popup {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 2px solid #d14a72;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        #popup h3 {
+            color: #d14a72;
+            text-align: center;
+        }
+
+        #popup button {
+            background-color: #d14a72;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+        }
+
+        #overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0,             0, 0.5);
+            z-index: 999;
+        }
+
+        /* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+    h2 {
+        font-size: 2em; /* Smaller font size for headings */
+    }
+
+    .timeline {
+        padding: 10px; /* Reduce padding for timeline */
+        margin: 10px; /* Reduce margin for timeline */
+    }
+
+    .event {
+        margin-bottom: 15px; /* Reduce margin between events */
+        padding: 10px; /* Reduce padding for events */
+    }
+
+    .event h4 {
+        font-size: 1.3em; /* Smaller font size for event titles */
+    }
+
+    .event p {
+        font-size: 0.9em; /* Smaller font size for event descriptions */
+    }
+
+    .book-slot h3 {
+        font-size: 1.5em; /* Smaller font size for booking section */
+    }
+
+    .carousel img, .carousel video {
+        max-height: 300px; /* Adjust max height for images/videos */
+    }
+
+    .voice-notes {
+        padding: 15px; /* Reduce padding for voice notes section */
+    }
+
+    audio {
+        width: 100%; /* Ensure audio player is full width */
+    }
+}
+
+@media (max-width: 480px) {
+    h2 {
+        font-size: 1.5em; /* Further reduce font size for headings */
+    }
+
+    .event {
+        padding: 8px; /* Further reduce padding for events */
+    }
+
+    .book-slot input, .book-slot textarea {
+        padding: 8px; /* Reduce padding for inputs */
+    }
+
+    .book-slot button {
+        padding: 8px 15px; /* Adjust button padding */
+    }
+
+    .carousel img, .carousel video {
+        max-height: 200px; /* Further reduce max height for images/videos */
+    }
+
+    #modal {
+        width: 95%; /* Make modal width responsive */
+    }
+}
+
+    </style>
+
+</head>
+<body>
+    <h2>Our Beautiful Journey</h2>
+
+    <div id="overlay"></div>
+    <div id="popup">
+        <h3>On December 14th, and for all the days that follow, Nishu will be yours, now and forever.</h3>
+        <button onclick="closePopup()">Close</button>
+    </div>
+
+    <div class="timeline">
+        <h3>Timeline of Our Memories</h3>
+        <!-- Event 1 -->
+        <div class="event">
+            <h4>Our First Date!!!!</h4>
+            <p class="date">25-02-2023</p>
+            <p>Our first-ever date to the movies, lunch, and the beach was unforgettable. I was so nervous yet so incredibly happy to be with you. Every moment felt so special, and all I could think about afterward was how badly I wanted to go on another date with you.</p>
+            <button onclick="openModal(['Beach.jpeg', 'Beach1.jpeg', 'Ant.mp4'])">View Photos & Videos</button>
+        </div>
+        
+        <!-- Event 2 -->
+        <div class="event">
+            <h4>Oppenheimer walaaa Dateee</h4>
+            <p class="date">30-07-2023</p>
+            <p>We watched Oppenheimer together, and I remember being so close to holding your hand and leaning on you—it felt like such a perfect moment. Afterward, we went to that Italian place, and everything about that day felt like it came straight out of a movie. I didn’t want it to end.</p>
+            <button onclick="openModal(['Open.jpeg', 'Open2.jpeg'])">View Photos & Videos</button>
+        </div>
+        
+               <!-- Event 3 -->
+               <div class="event">
+                <h4>Chotaa Bean Board Walaaa Dateeeee</h4>
+                <p class="date">21-08-2023</p>
+                <p>Our date to Chota Bean Board was unforgettable! Remember when they served you a 'blueberry pastry' that looked suspiciously like chocolate? 😂 It was such a funny and sweet moment—just like us!</p>
+                <button onclick="openModal(['Img1.jpeg', 'Img2.jpeg'])">View Photos & Videos</button>
+            </div>
+            
+            <!-- Event 4 -->
+            <div class="event">
+                <h4>Shaadi Shuda Waale Feeeelssss</h4>
+                <p class="date">05-09-2023</p>
+                <p>On Teacher's Day, we wore the same color outfits, and it felt like we were a newly married couple. It was such a beautiful moment, and we looked so perfect together. 🥰</p>
+                <button onclick="openModal(['Img3.jpeg', 'Img4.jpeg', 'Img5.jpeg'])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>First Everr Hackathonnnn</h4>
+                <p class="date">14-09-2023</p>
+                <p>Our first ever hackathon wasn't just about coding; it was about building memories and falling for each other amidst the lines of code. ❤️</p>
+                <button onclick="openModal(['Img6.jpeg', 'Img7.jpeg', 'Img8.jpeg', 'Img9.jpeg'])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>Secret Beach Dateee</h4>
+                <p class="date">04-11-2023</p>
+                <p>The day you took me to that secret beach felt like stepping into our own little paradise. Just us, the endless waves, and the magic of being together where the world seemed to pause just for us. 🌊❤️</p>
+                <button onclick="openModal(['Img10.jpeg', 'Img11.jpeg'])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>India Vs Australia Matchh Finalsss</h4>
+                <p class="date">19-11-2023</p>
+                <p>Our first India vs. Australia cricket match together was unforgettable—cheering side by side, feeling the auditorium’s electric vibe, and stealing glances at you between overs made it even more special. 🏏❤️</p>
+                <button onclick="openModal(['Img12.jpeg', 'Img13.jpeg', 'Img14.jpeg'])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>Exactly Before a YEARR</h4>
+                <p class="date">14-12-2023</p>
+                <p>Your first birthday we celebrated together was magical—I loved planning every little surprise just to see that smile on your face. It wasn’t just your day; it felt like a celebration of us. 🎂❤️</p>
+                <button onclick="openModal(['Img15.jpeg', 'Img16.jpeg'])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>Gypsy Walaaa Dateeeee</h4>
+                <p class="date">21-12-2023</p>
+                <p>Our little French fries and dessert date was so simple yet so perfect. Sharing those tiny fries and savoring every sweet bite with you made it feel like a scene straight out of a love story. 🍟🍨❤️</p>
+                <button onclick="openModal(['Img17.jpeg', 'Img18.jpeg'])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>Badaa Bean Board Walaaa Dateeeee</h4>
+                <p class="date">29-12-2023</p>
+                <p>Our date after college to that dessert place felt so magical. Sitting there with you, sharing sweet treats and stolen glances, made an ordinary day feel extraordinary. 🍰✨</p>
+                <button onclick="openModal(['Img19.jpeg'])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>Festtttt</h4>
+                <p class="date">02-02-2024</p>
+                <p>Our first college fest as a couple was unforgettable. From the excitement in the air to dancing with you under the lights, it felt like we were in our own little world. It was the perfect start to so many more adventures ahead. 💫🎉</p>
+                <button onclick="openModal(['Img20.jpeg', 'Img21.jpeg', 'Img22.jpeg'])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>First Valentines Dayyy</h4>
+                <p class="date">14-02-2024</p>
+                <p>Our first Valentine's Day together was pure magic. From the way you looked at me to the way we spent the day, it felt like the world was just us. Every moment with you made me feel special, and I can't wait for all the Valentine's Days we'll share in the future.💖</p>
+                <button onclick="openModal(['Img23.jpeg', 'Img24.jpeg'])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>Subwayy Dateee</h4>
+                <p class="date">15-02-2024</p>
+                <p>Our subway date was simple yet unforgettable. Sharing a meal, laughing over our favorite sandwiches, and just being in each other's company made it feel so special. Sometimes, it's the little moments that become the sweetest memories.💕</p>
+                <button onclick="openModal(['Img25.jpeg', 'Img26.jpeg'])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>Firsttt Everrrr Trippppp</h4>
+                <p class="date">11-03-2024</p>
+                <p>Our first trip to the IIT Kanpur fest was unforgettable. From late-night walks under the stars to dancing together in the quiet hours, every moment felt magical. It wasn’t just the fest—it was the memories we created, the laughter we shared, and the joy of being together.🌟</p>
+                <button onclick="openModal(['Img27.jpeg', 'Img28.jpeg', 'Img29.jpeg','Img30.jpeg','Img31.jpeg','Img32.jpeg','Img33.jpeg','Img34.jpeg','Img35.jpeg'])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>Hackathonnn</h4>
+                <p class="date">10-06-2024</p>
+                <p>Our hackathon after the summer break felt like a reunion in the best way. After more than a month apart, seeing you again felt like the perfect spark to reignite everything. It wasn’t just about the hackathon—it was about reconnecting, laughing, and making up for the lost time.</p>
+                <button onclick="openModal(['Img36.jpeg', 'Img37.jpeg'])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>Us celebrating my Birthday Soooo manyyyy timessss</h4>
+                <p class="date">15-06-2024</p>
+                <p>Celebrating my birthday with you five times this year has been nothing short of amazing. Each celebration, no matter how big or small, felt like a beautiful reminder of how lucky I am to have you by my side. Every moment with you made this birthday season unforgettable.🎉💖</p>
+                <button onclick="openModal(['Img38.jpeg', 'Img39.jpeg', 'Img40.jpeg','Img41.jpeg','Img42.jpeg','Img43.jpeg','Img44.jpeg',])">View Photos & Videos</button>
+            </div>
+    
+            <div class="event">
+                <h4>1 Year Anniversaryyyyy</h4>
+                <p class="date">10-08-2024</p>
+                <p>Our one-year anniversary felt like a beautiful milestone. It’s hard to believe that a year has passed, filled with so many memories, laughter, and love. Looking back, I realize how much we’ve grown together, and I can’t wait for all the years ahead. You’re my favorite part of every day, and I’m so grateful for this journey we’ve shared.💕</p>
+                <button onclick="openModal(['Img.jpeg', 'Imgg.jpeg', 'Imggg.jpeg', 'Imgggg.jpeg'])">View Photos & Videos</button>
+            </div>
+
+            <div class="event">
+                <h4>Wedding Dayyyy</h4>
+                <p class="date">Very Soooooon</p>
+                <p>I can't wait for the day we say 'I do' and start the rest of our lives together, surrounded by love and happiness.</p>
+                <button onclick="openModal(['Wedding.jpg'])">View Photos & Videos</button>
+            </div>
+
+    </div>
+
+    <!-- Romantic Voice Notes Section -->
+    <h2>Our Romantic Voice Notes</h2>
+    <div class="voice-notes">
+        <div class="voice-note">
+            <h4>Voice Note 1: A Sweet Message</h4>
+            <audio controls>
+                <source src="Voice01.mp4" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        <div class="voice-note">
+            <h4>Voice Note 2: A Love Poem</h4>
+            <audio controls>
+                <source src="Voice02.mp4" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        <div class="voice-note">
+            <h4>Voice Note 3: A Special Memory</h4>
+            <audio controls>
+                <source src="Voice03.mp4" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        
+        <div class="voice-note">
+            <h4>Voice Note 4: A Special Memory</h4>
+            <audio controls>
+                <source src="Voice04.mp4" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+
+        <div class="voice-note">
+            <h4>Voice Note 5: A Special Memory</h4>
+            <audio controls>
+                <source src="Voice05.mp4" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+
+    </div>
+
+    <!-- Book a Slot Section -->
+    <div class="book-slot">
+        <h3>Book a Slot for December 14th</h3>
+        <form id="booking-form">
+            <input type="text" id="name" placeholder="Your Name" required>
+            <input type="email" id="email" placeholder="Your Email" required>
+            <textarea id="additional-info" placeholder="Additional Information" rows="4"></textarea>
+            <button type="submit">Book Now</button>
+        </form>
+    </div>
+
+    <!-- Google Map -->
+    <div id="map"></div>
+
+    <!-- Full Calendar -->
+    <div id="calendar"></div>
+
+    <div id="modal">
+        <div class="carousel">
+            <div class="slide">
+                <img src="Beach.jpeg" alt="Memory">
+            </div>
+        </div>
+        <button id="close-modal" onclick="closeModal()">Close</button>
+        <!-- Carousel Navigation Buttons -->
+        <span class="carousel-nav prev" onclick="prevSlide()">❮</span>
+        <span class="carousel-nav next" onclick="nextSlide()">❯</span>
+    </div>
+
+    <script>
+        // Map initialization function
+        function initMap() {
+            var map = L.map('map').setView([17.6868, 83.2185], 13); // Coordinates for Visakhapatnam
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            L.marker([17.6868, 83.2185]).addTo(map).bindPopup('Our Journey in Visakhapatnam').openPopup();
+        }
+
+        // FullCalendar initialization
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: [
+                    { title: 'Our First Date', start: '2023-01-14' },
+                    { title: 'Movie Night', start: '2023-03-02' },
+                    // Add more events here...
+                ]
+            });
+            calendar.render();
+        });
+
+        let currentIndex = 0;
+        let imagesAndVideos = [];
+
+        // Open Modal with Images and Videos
+        function openModal(images) {
+            imagesAndVideos = images;  // Store the images/videos for navigation
+            const carousel = document.querySelector('.carousel');
+            carousel.innerHTML = ''; // Clear old content
+
+                       // Display the first image/video
+                       const firstSlide = document.createElement('div');
+            firstSlide.classList.add('slide');
+            
+            if (images[0].endsWith('.mp4')) {
+                const video = document.createElement('video');
+                video.src = images[0];
+                video.controls = true;
+                firstSlide.appendChild(video);
+            } else {
+                const img = document.createElement('img');
+                img.src = images[0];
+                firstSlide.appendChild(img);
+            }
+            
+            carousel.appendChild(firstSlide);
+
+            document.getElementById('modal').style.display = 'block';
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        // Navigate to next image/video
+        function nextSlide() {
+            currentIndex++;
+            if (currentIndex >= imagesAndVideos.length) {
+                currentIndex = 0;
+            }
+            updateCarousel();
+        }
+
+        // Navigate to previous image/video
+        function prevSlide() {
+            currentIndex--;
+            if (currentIndex < 0) {
+                currentIndex = imagesAndVideos.length - 1;
+            }
+            updateCarousel();
+        }
+
+        // Update the carousel with the current image/video
+        function updateCarousel() {
+            const carousel = document.querySelector('.carousel');
+            carousel.innerHTML = ''; // Clear old content
+            const newSlide = document.createElement('div');
+            newSlide.classList.add('slide');
+            if (imagesAndVideos[currentIndex].endsWith('.mp4')) {
+                const video = document.createElement('video');
+                video.src = imagesAndVideos[currentIndex];
+                video.controls = true;
+                newSlide.appendChild(video);
+            } else {
+                const img = document.createElement('img');
+                img.src = imagesAndVideos[currentIndex];
+                newSlide.appendChild(img);
+            }
+            carousel.appendChild(newSlide);
+        }
+
+        // Function to create falling hearts
+        function createFallingHearts() {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.innerHTML = '❤️'; // Heart emoji
+            heart.style.left = Math.random() * 100 + 'vw'; // Random horizontal position
+            heart.style.animationDuration = Math.random() * 3 + 2 + 's'; // Random fall duration
+            document.body.appendChild(heart);
+
+            // Remove heart after it falls
+            heart.addEventListener('animationend', () => {
+                heart.remove();
+            });
+        }
+
+        // Function to create stars
+        function createStars() {
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.top = Math.random() * 100 + 'vh'; // Random vertical position
+                star.style.left = Math.random() * 100 + 'vw'; // Random horizontal position
+                document.body.appendChild(star);
+            }
+        }
+
+        // Generate hearts and stars at intervals
+        setInterval(createFallingHearts, 500); // Create a heart every 500ms
+        createStars(); // Create stars on page load
+
+        // Popup functions
+        function showPopup() {
+            document.getElementById('popup').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closePopup() {
+            document.getElementById('popup').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        // Handle form submission
+        document.getElementById('booking-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Show the romantic message popup instead of sending an email
+            showPopup();
+        });
+
+    </script>
+</body>
+</html>
